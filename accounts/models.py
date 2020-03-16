@@ -1,56 +1,38 @@
 from django.db import models
-from django.contrib.auth.models import (
-    BaseUserManager, AbstractBaseUser
-)
+from django.contrib.auth.models import (AbstractBaseUser, PermissionsMixin)
 
+from django.conf import settings
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+from rest_framework.authtoken.models import Token
 
-class MyUserManager(BaseUserManager):
-    def create_user(self, email, date_of_birth, password=None):
-        """
-        Creates and saves a User with the given email, date of
-        birth and password.
-        """
-        if not email:
-            raise ValueError('Users must have an email address')
+from .managers import CustomUserManager
 
-        user = self.model(
-            email=self.normalize_email(email),
-            date_of_birth=date_of_birth,
-        )
+class MyUser(AbstractBaseUser, PermissionsMixin):
+    email           = models.EmailField(verbose_name='email address', max_length=255, unique=True,)
+    username 		= models.CharField(max_length=30, unique=True)
+    fullname        = models.CharField(verbose_name='full name', max_length=50, blank=True)
 
-        user.set_password(password)
-        user.save(using=self._db)
-        return user
+    is_active       = models.BooleanField(default=False)
+    
+    created_at      = models.DateTimeField(auto_now_add=True)
+    updated_at      = models.DateTimeField(auto_now=True)
 
-    def create_superuser(self, email, date_of_birth, password=None):
-        """
-        Creates and saves a superuser with the given email, date of
-        birth and password.
-        """
-        user = self.create_user(
-            email,
-            password=password,
-            date_of_birth=date_of_birth,
-        )
-        user.is_admin = True
-        user.save(using=self._db)
-        return user
+    # password field supplied by AbstractBaseUser
+    # last_login field supplied by AbstractBaseUser
+    # is_superuser field provided by PermissionsMixin
+    # groups field provided by PermissionsMixin
+    # user_permissions field provided by PermissionsMixin
 
+    #is_staff = models.BooleanField(default=False) can be removed if not using Django Admin
+    #is_admin can be removed if not using Django Admin
 
-class MyUser(AbstractBaseUser):
-    email = models.EmailField(
-        verbose_name='email address',
-        max_length=255,
-        unique=True,
-    )
-    date_of_birth = models.DateField()
-    is_active = models.BooleanField(default=True)
-    is_admin = models.BooleanField(default=False)
-
-    objects = MyUserManager()
+    objects = CustomUserManager()
 
     USERNAME_FIELD = 'email'
-    REQUIRED_FIELDS = ['date_of_birth']
+    REQUIRED_FIELDS = ['fullname', 'username',]
+
+    #email & password is auto required , no need to implement in REQUIRED_FIELD 
 
     def __str__(self):
         return self.email
@@ -70,3 +52,8 @@ class MyUser(AbstractBaseUser):
         "Is the user a member of staff?"
         # Simplest possible answer: All admins are staff
         return self.is_admin
+
+@receiver(post_save, sender=settings.AUTH_USER_MODEL)
+def create_auth_token(sender, instance=None, created=False, **kwargs):
+    if created:
+        Token.objects.create(user=instance)

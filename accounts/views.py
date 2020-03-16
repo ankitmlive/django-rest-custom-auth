@@ -4,13 +4,21 @@ from rest_framework import permissions
 from accounts.serializers import UserSerializer
 
 
-class UserViewSet(viewsets.ModelViewSet):
+# class UserViewSet(viewsets.ModelViewSet):
+#     """
+#     API endpoint that allows users to be viewed or edited.
+#     """
+#     queryset = MyUser.objects.all().order_by('-date_joined')
+#     serializer_class = UserSerializer
+#     permission_classes = [permissions.IsAuthenticated]
+
+class RegisterView(generics.CreateAPIView):
     """
-    API endpoint that allows users to be viewed or edited.
+    Endpoint for user registration.
     """
-    queryset = MyUser.objects.all().order_by('-date_joined')
-    serializer_class = UserSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    #permission_classes = (permissions.AllowAny,)
+    queryset = ProUser.objects.all()
+    serializer_class = serializers.UserRegistrationSerializer
 
 
 # class GroupViewSet(viewsets.ModelViewSet):
