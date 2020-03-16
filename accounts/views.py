@@ -1,4 +1,5 @@
 from accounts.models import MyUser
+from rest_framework.authtoken.models import Token
 from accounts.serializers import UserRegistrationSerializer
 from rest_framework import generics
 
@@ -18,22 +19,24 @@ class UserRegistrationAPIView(generics.CreateAPIView):
     List all snippets, or create a new snippet.
     """
     def post(self, request, format=None):
-        queryset = MyUser.objects.all()
+        data = {}
         serializer = UserRegistrationSerializer(data=request.data)
+        permission_classes = (permissions.AllowAny,)
         if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                account = serializer.save()
+                data['response'] = 'successfully registered new user.'
+                data['email'] = account.email
+                data['username'] = account.username
+                data['pk'] = account.pk
+                token = Token.objects.get(user=account).key
+                data['token'] = token
+        else:
+            data = serializer.errors
+
+        return Response(data)
+        
 
 
-
-# class UserRegistrationAPIView(generics.CreateAPIView):
-#     """
-#     Endpoint for user registration.
-#     """
-#     queryset = MyUser.objects.all()
-#     serializer_class = UserRegistrationSerializer
-#     permission_classes = (permissions.AllowAny,)
 
 
 # class UserViewSet(viewsets.ModelViewSet):
