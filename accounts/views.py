@@ -34,6 +34,18 @@ class UserRegistrationAPIView(generics.CreateAPIView):
             data = serializer.errors
 
         return Response(data)
+
+class UserLoginAPIView(APIView):
+    """
+    View responsible for USER Login
+    """
+    def post(self, request, format=None):
+        data = {}
+        serializer = UserLoginSerializer(data=request.data)
+        permission_classes = (permissions.AllowAny,)
+        if serializer.is_valid():
+                account =   serializer.save()
+                #..... on progress
         
 
 

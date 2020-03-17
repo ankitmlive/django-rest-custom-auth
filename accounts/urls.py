@@ -10,7 +10,8 @@ from . import views
 # Additionally, we include login URLs for the browsable API.
 urlpatterns = [
     #path('', include(router.urls)),
-    path('register/', views.UserRegistrationAPIView.as_view(), name='register-user'),
+    path('register/', views.UserRegistrationAPIView.as_view(), name='register'),
+    path('login/', views.UserLoginAPIView.as_view(), name='login')
     #path('api-auth/', include('rest_framework.urls', namespace='rest_framework'))
 ]
 
