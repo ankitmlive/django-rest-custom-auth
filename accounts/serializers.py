@@ -50,7 +50,7 @@ class UserRegistrationSerializer(serializers.Serializer):
         user_obj.save()
         return user_obj
 
-class UserLoginSerializer(serializers.ModelSerializer):
+class UserLoginSerializer(serializers.Serializer):
 
     username = serializers.CharField(required=False, allow_blank=True, write_only=True,)
     email = serializers.EmailField(required=False, allow_blank=True, write_only=True, label="Email Address")
@@ -88,8 +88,8 @@ class UserLoginSerializer(serializers.ModelSerializer):
 
         if user_obj.is_active:
             token, created = Token.objects.get_or_create(user=user_obj)
-            data["token"] = token
-            data['response'] = 'successfully logged in.'
+            data["token"] = user_obj.username
+            data["email"] = user_obj.email
         else:
             raise serializers.ValidationError("User not active.")
 
