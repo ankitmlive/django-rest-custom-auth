@@ -1,6 +1,7 @@
 from accounts.models import MyUser
-from rest_framework.authtoken.models import Token
-from accounts.serializers import UserRegistrationSerializer
+from rest_framework.authtoken.views import ObtainAuthToken
+
+from accounts.serializers import UserRegistrationSerializer, UserLoginSerializer
 from rest_framework import generics
 
 from django.http import Http404
@@ -35,20 +36,43 @@ class UserRegistrationAPIView(generics.CreateAPIView):
 
         return Response(data)
 
-# class UserLoginAPIView(APIView):
-#     """
-#     View responsible for USER Login
-#     """
-#     authentication_classes = []
-# 	permission_classes = []
+# class UserLoginAPIView(ObtainAuthToken):
+#     def post(self, request, *args, **kwargs):
+#             serializer = self.serializer_class(data=request.data, context={'request': request})
+#             serializer.is_valid(raise_exception=True)
+#             user = serializer.validated_data['user']
+#             token, created = Token.objects.get_or_create(user=user)
+#             return Response({
+#                 'token': token.key,
+#                 'user_id': user.pk,
+#                 'email': user.email
+#             })
 
-#     def post(self, request):
-#         data = {}
-#         serializer = UserLoginSerializer(data=request.data)
-#         permission_classes = (permissions.AllowAny,)
-#         if serializer.is_valid():
-#                 account =   serializer.save()
-#                 #..... on progress
+class UserLoginAPIView(APIView):
+    """
+    View responsible for USER Login
+    """
+    authentication_classes = []
+    permission_classes = []
+
+    def post(self, request):
+        data = {}
+        serializer = UserLoginSerializer(data=request.data, context={'request': request})
+        permission_classes = (permissions.AllowAny,)
+        if serializer.is_valid(raise_exception=True):
+                data = serializer.data
+                data['response'] = 'successfully logged in.'
+                data['email'] = account.email
+                data['username'] = account.username
+                data['pk'] = account.pk
+                token = Token.objects.get(user=account).key
+                data['token'] = token
+
+
+
+            
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         
 
 
