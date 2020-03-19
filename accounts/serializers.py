@@ -88,8 +88,8 @@ class UserLoginSerializer(serializers.ModelSerializer):
 
         if user_obj.is_active:
             token, created = Token.objects.get_or_create(user=user_obj)
-            data['token'] = token
-            data['username'] = user_obj.username
+            data["token"] = token
+            data['response'] = 'successfully logged in.'
         else:
             raise serializers.ValidationError("User not active.")
 

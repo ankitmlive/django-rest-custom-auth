@@ -60,19 +60,15 @@ class UserLoginAPIView(APIView):
         serializer = UserLoginSerializer(data=request.data, context={'request': request})
         permission_classes = (permissions.AllowAny,)
         if serializer.is_valid(raise_exception=True):
-                data = serializer.data
-                data['response'] = 'successfully logged in.'
-                data['email'] = account.email
-                data['username'] = account.username
-                data['pk'] = account.pk
-                token = Token.objects.get(user=account).key
-                data['token'] = token
+            data = serializer.data
+        else:
+            data = serializer.errors
 
-
+        return Response(data)
 
             
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        #return Response(serializer.data, status=status.HTTP_200_OK)
+        #return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         
 
 
