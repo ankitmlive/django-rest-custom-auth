@@ -3,7 +3,6 @@ from accounts.models import MyUser
 from django.db.models import Q
 from django.contrib.auth import get_user_model
 from django.conf import settings
-from rest_framework.authtoken.models import Token
 
 User = get_user_model()
 
@@ -50,7 +49,7 @@ class UserRegistrationSerializer(serializers.Serializer):
         user_obj.save()
         return user_obj
 
-class UserLoginSerializer(serializers.Serializer):
+class UserLoginSerializer(serializers.ModelSerializer):
 
     username = serializers.CharField(required=False, allow_blank=True, write_only=True,)
     email = serializers.EmailField(required=False, allow_blank=True, write_only=True, label="Email Address")
@@ -87,12 +86,11 @@ class UserLoginSerializer(serializers.Serializer):
                 raise serializers.ValidationError("Invalid credentials.")
 
         if user_obj.is_active:
-            token, created = Token.objects.get_or_create(user=user_obj)
-            data["token"] = user_obj.username
-            data["email"] = user_obj.email
+            data["user"] = user_obj
         else:
             raise serializers.ValidationError("User not active.")
 
         return data
+
 
    
