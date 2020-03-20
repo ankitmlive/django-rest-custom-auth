@@ -21,12 +21,12 @@ class UserRegistrationSerializer(serializers.Serializer):
         return value
 
     def validate_email(self, value):
-        if MyUser.objects.filter(email=value).exists():
+        if User.objects.filter(email=value).exists():
             raise serializers.ValidationError("Email already exists.")
         return value
 
     def validate_username(self, value):
-        if MyUser.objects.filter(username=value).exists():
+        if User.objects.filter(username=value).exists():
             raise serializers.ValidationError("Username already exists.")
         return value
 
@@ -40,12 +40,13 @@ class UserRegistrationSerializer(serializers.Serializer):
         username = self.validated_data['username']
         email    = self.validated_data['email']
         password = self.validated_data['password']
-        user_obj = MyUser(
+        user_obj = User(
                 username = username,
                 email = email,
                 fullname = fullname,
             )
         user_obj.set_password(password)
+        user_obj.is_active = False
         user_obj.save()
         return user_obj
 
