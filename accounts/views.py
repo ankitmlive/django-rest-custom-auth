@@ -4,6 +4,8 @@ from rest_framework.authtoken.views import ObtainAuthToken
 from accounts.serializers import UserRegistrationSerializer, UserLoginSerializer
 from rest_framework import generics
 
+from django.contrib.auth.models import update_last_login
+
 from django.http import Http404
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -52,6 +54,7 @@ class UserLoginAPIView(APIView):
         if serializer.is_valid(raise_exception=True):
                 user = serializer.validated_data['user']
                 token, created = Token.objects.get_or_create(user=user)
+                update_last_login(None, user)
                 data['response'] = 'successfully logged in'
                 data['email'] = user.email
                 data['username'] = user.username
@@ -62,19 +65,3 @@ class UserLoginAPIView(APIView):
 
         return Response(data)
 
-
-# class UserViewSet(viewsets.ModelViewSet):
-#     """
-#     API endpoint that allows users to be viewed or edited.
-#     """
-#     queryset = MyUser.objects.all().order_by('-date_joined')
-#     serializer_class = UserSerializer
-#     permission_classes = [permissions.IsAuthenticated]
-
-# class GroupViewSet(viewsets.ModelViewSet):
-#     """
-#     API endpoint that allows groups to be viewed or edited.
-#     """
-#     queryset = Group.objects.all()
-#     serializer_class = GroupSerializer
-#     permission_classes = [permissions.IsAuthenticated]
