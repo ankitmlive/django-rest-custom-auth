@@ -31,26 +31,21 @@ class UserRegistrationAPIView(generics.CreateAPIView):
     View responsible for new USER Registrartion
     """
     def post(self, request, format=None):
-        data = {}
+        response_data = {}
         serializer = UserRegistrationSerializer(data=request.data)
         permission_classes = (permissions.AllowAny,)
         if serializer.is_valid():
                 account = serializer.save()
-                data['response'] = 'successfully registered new user.'
-                data['email'] = account.email
-                data['username'] = account.username
-                data['pk'] = account.pk
+                response_data['response'] = 'successfully registered new user.'
+                response_data['email'] = account.email
+                response_data['username'] = account.username
+                response_data['pk'] = account.pk
                 token = Token.objects.get(user=account).key
-                data['token'] = token
-
-                to = account.email
-
-                context = {"user": account}
-                ActivationEmail(self.request, context).send(to)
+                response_data['token'] = token
         else:
-            data = serializer.errors
+            response_data = serializer.errors
 
-        return Response(data)
+        return Response(response_data)
 
 
 class UserLoginAPIView(APIView):
@@ -61,22 +56,22 @@ class UserLoginAPIView(APIView):
     permission_classes = []
 
     def post(self, request):
-        data = {}
+        response_data = {}
         serializer = UserLoginSerializer(data=request.data)
         permission_classes = (permissions.AllowAny,)
         if serializer.is_valid(raise_exception=True):
                 user = serializer.validated_data['user']
                 token, created = Token.objects.get_or_create(user=user)
                 update_last_login(None, user)
-                data['response'] = 'successfully logged in'
-                data['email'] = user.email
-                data['username'] = user.username
-                data['pk'] = user.pk
-                data['token'] = token.key
+                response_data['response'] = 'successfully logged in'
+                response_data['email'] = user.email
+                response_data['username'] = user.username
+                response_data['pk'] = user.pk
+                response_data['token'] = token.key
         else:
-            data = serializer.errors
+            response_data = serializer.errors
 
-        return Response(data)
+        return Response(response_data)
 
 # class UserLogoutAPIView(APIView):
 #     """

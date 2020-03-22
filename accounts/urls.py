@@ -11,11 +11,10 @@ from . import views
 # Additionally, we include login URLs for the browsable API.
 urlpatterns = [
     #path('', include(router.urls)),
-    path('register/', views.UserRegistrationAPIView.as_view(), name='register'),
-    path('login/', views.UserLoginAPIView.as_view(), name='login'),
-    #path('logout/', views.UserLogoutAPIView.as_view(), name='logout'),
+    path('signup/', views.UserRegistrationAPIView.as_view(), name='sign-up'),
+    path('signin/', views.UserLoginAPIView.as_view(), name='sign-in'),
+    #path('signout/', views.UserLogoutAPIView.as_view(), name='sign-out'),
     path('get-token/', tokenViews.obtain_auth_token, name='get-token')
-    #path('api-auth/', include('rest_framework.urls', namespace='rest_framework'))
 ]
 
     # path("signup/", views.signup, name="account_signup"),
