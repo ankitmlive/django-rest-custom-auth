@@ -2,7 +2,7 @@ from accounts.models import MyUser
 from accounts.email import ActivationEmail
 from rest_framework.authtoken.views import ObtainAuthToken
 
-from accounts.serializers import UserRegistrationSerializer, UserLoginSerializer
+from accounts.serializers import UserRegistrationSerializer, UserLoginSerializer, UserActivationSerializer
 from rest_framework import generics
 
 from django.contrib.auth.models import update_last_login
@@ -80,25 +80,26 @@ class UserLoginAPIView(APIView):
         return Response(response_data)
 
 
-# class UserActivationAPIView():
-#     """
-#      View responsible for USER Activation
-#     """
+class UserActivationAPIView(APIView):
+    """
+     View responsible for USER Activation
+    """
+    authentication_classes = []
+    permission_classes = []
 
-#     def activation(self, request, *args, **kwargs):
-#         serializer = self.get_serializer(data=request.data)
-#         serializer.is_valid(raise_exception=True)
-#         user = serializer.user
-#         user.is_active = True
-#         user.save()
+    def post(self, request, *args, **kwargs):
+        serializer = UserActivationSerializer(data=request.data)
+        permission_classes = (permissions.AllowAny,)
+        serializer.is_valid(raise_exception=True)
+        user = serializer.user
+        user.is_active = True
+        user.save()
 
-#         signals.user_activated.send(
-#             sender=self.__class__, user=user, request=self.request
-#         )
+        signals.user_activated.send(sender=self.__class__, user=user, request=self.request)
 
-#         if settings.SEND_CONFIRMATION_EMAIL:
-#             context = {"user": user}
-#             to = [get_user_email(user)]
-#             settings.EMAIL.confirmation(self.request, context).send(to)
+        # if settings.SEND_CONFIRMATION_EMAIL:
+        #     context = {"user": user}
+        #     to = [get_user_email(user)]
+        #     settings.EMAIL.confirmation(self.request, context).send(to)
 
-#         return Response(status=status.HTTP_204_NO_CONTENT)
+        return Response(status=status.HTTP_204_NO_CONTENT)
