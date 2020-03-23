@@ -13,7 +13,9 @@ urlpatterns = [
     #path('', include(router.urls)),
     path('signup/', views.UserRegistrationAPIView.as_view(), name='sign-up'),
     path('signin/', views.UserLoginAPIView.as_view(), name='sign-in'),
+    #path('activate/', tokenViews.obtain_auth_token, name='get-token')
     #path('signout/', views.UserLogoutAPIView.as_view(), name='sign-out'),
+    #path('change_password/', ChangePasswordView.as_view(), name="change_password"),
     path('get-token/', tokenViews.obtain_auth_token, name='get-token')
 ]
 

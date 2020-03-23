@@ -23,6 +23,7 @@ from rest_framework.authentication import TokenAuthentication
 from rest_framework.decorators import api_view, authentication_classes, permission_classes
 
 from django.core.mail import send_mail
+from accounts.compat import get_user_email
 
 User = get_user_model()
 
@@ -42,6 +43,11 @@ class UserRegistrationAPIView(generics.CreateAPIView):
                 response_data['pk'] = account.pk
                 token = Token.objects.get(user=account).key
                 response_data['token'] = token
+
+                #after creating user send and activation mail to user
+                context = {"user": account}
+                to = [get_user_email(account)]
+                ActivationEmail(self.request, context).send(to)
         else:
             response_data = serializer.errors
 
@@ -73,15 +79,26 @@ class UserLoginAPIView(APIView):
 
         return Response(response_data)
 
-# class UserLogoutAPIView(APIView):
+
+# class UserActivationAPIView():
 #     """
-#     Use this endpoint to logout user (remove user authentication token).
-#     not working yet
+#      View responsible for USER Activation
 #     """
 
-#     authentication_classes = []
-#     #permission_classes = [permissions.IsAuthenticated,]
+#     def activation(self, request, *args, **kwargs):
+#         serializer = self.get_serializer(data=request.data)
+#         serializer.is_valid(raise_exception=True)
+#         user = serializer.user
+#         user.is_active = True
+#         user.save()
 
-#     def post(self, request):
-#         request.user.auth_token.delete()
-#         return Response(status=status.HTTP_200_OK)
+#         signals.user_activated.send(
+#             sender=self.__class__, user=user, request=self.request
+#         )
+
+#         if settings.SEND_CONFIRMATION_EMAIL:
+#             context = {"user": user}
+#             to = [get_user_email(user)]
+#             settings.EMAIL.confirmation(self.request, context).send(to)
+
+#         return Response(status=status.HTTP_204_NO_CONTENT)
