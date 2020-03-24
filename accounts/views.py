@@ -27,7 +27,7 @@ from accounts.compat import get_user_email
 
 User = get_user_model()
 
-class UserRegistrationAPIView(generics.CreateAPIView):
+class UserSignUpAPIView(generics.CreateAPIView):
     """
     View responsible for new USER Registrartion
     """
@@ -79,6 +79,21 @@ class UserSignInAPIView(ObtainAuthToken):
 
         return Response(response_data)
 
+class UserSignOutAPIView(APIView):
+    """
+    View responsible for USER Signout
+    later there is a need of serializer implementaion
+    """
+    authentication_classes = [TokenAuthentication,]
+    permission_classes = [IsAuthenticated,]
+
+    def post(self, request):
+        response_data = {}
+        data = Token.objects.filter(user=request.user).delete()
+        user_logged_out.send(sender=request.user.__class__, request=request, user=request.user)
+        response_data['response'] = 'user successfully logged out'
+        return Response(response_data)
+
 class UserActivationAPIView(APIView):
     """
      View responsible for USER Activation
@@ -102,23 +117,6 @@ class UserActivationAPIView(APIView):
         #     settings.EMAIL.confirmation(self.request, context).send(to)
 
         return Response(status=status.HTTP_204_NO_CONTENT)
-
-class UserSignoutAPIView(APIView):
-    """
-     View responsible for USER Signout
-    """
-    authentication_classes = []
-    permission_classes = [IsAuthenticated,]
-
-    def get(self, request):
-        response_data = {}
-        data = Token.objects.filter(user=request.user).delete()
-        # fire a signal from here for user logout
-        #user_logged_out.send(sender=request.user.__class__, request=request, user=request.user)
-        response_data['response'] = 'user successfully logged out'
-        response_data['data']  = data
-
-        return Response(response_data)
 
 class HelloView(APIView):
     permission_classes = [IsAuthenticated,]
