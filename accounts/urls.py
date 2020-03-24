@@ -15,9 +15,10 @@ urlpatterns = [
     path('signin/', views.UserSignInAPIView.as_view(), name='sign-in'),
     path('signout/', views.UserSignOutAPIView.as_view(), name='sign-out'),
 
+    path('change-password/', views.ChangePasswordAPIView.as_view(), name="change-password"),
+
     path('activate/', views.UserActivationAPIView.as_view(), name='user-activate'),
     path('hello/', views.HelloView.as_view(), name='hello'),
 
-    #path('change_password/', ChangePasswordView.as_view(), name="change_password"),
     #path('get-token/', tokenViews.obtain_auth_token, name='get-token')
 ]

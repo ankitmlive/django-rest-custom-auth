@@ -2,7 +2,7 @@ from accounts.models import MyUser
 from accounts.email import ActivationEmail
 from rest_framework.authtoken.views import ObtainAuthToken
 
-from accounts.serializers import UserRegistrationSerializer, UserLoginSerializer
+from accounts.serializers import UserRegistrationSerializer, UserLoginSerializer, ChangePasswordSerializer
 from rest_framework import generics
 
 from django.contrib.auth.models import update_last_login
@@ -118,8 +118,32 @@ class UserActivationAPIView(APIView):
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 
-class HelloView(APIView):
+class ChangePasswordAPIView(APIView):
+    """
+    View responsible for USER password change not reset
+    """
+    authentication_classes = [TokenAuthentication,]
     permission_classes = [IsAuthenticated,]
-    def get(self, request):
-        content = {'message': 'Hello, World!'}
+
+    def post(self, request):
+        response_data = {}
+        serializer = ChangePasswordSerializer(data=request.data, context={'request': request.auth})
+        if serializer.is_valid(raise_exception=True):
+            data = serializer.validated_data
+            #further processing to be implemented
+            return Response(data)
+        else:
+            response_data = serializer.errors
+
+        return Response(response_data)
+
+#test view
+class HelloView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, format=None):
+        content = {
+            'user': request.user,  # `django.contrib.auth.User` instance.
+            'auth': request.auth,  # None
+        }
         return Response(content)

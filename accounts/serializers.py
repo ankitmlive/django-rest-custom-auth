@@ -5,6 +5,7 @@ from django.contrib.auth import authenticate, get_user_model
 from django.conf import settings
 from accounts.utils import decode_uid
 from rest_framework.authtoken.models import Token
+from django.contrib.auth.password_validation import validate_password
 #from .tokens import account_activation_token
 
 User = get_user_model()
@@ -95,6 +96,40 @@ class UserLoginSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("User not active.")
 
         return data
+
+class ChangePasswordSerializer(serializers.Serializer):
+    new_password = serializers.CharField(required=True, write_only=True, style={'input_type': 'password'})
+    confirm_new_password = serializers.CharField(required=True, write_only=True, style={'input_type': 'password'})
+    current_password = serializers.CharField(required=True, write_only=True, style={'input_type': 'password'})
+
+    def validate_new_password(self, value):
+        if len(value) < getattr(settings, 'PASSWORD_MIN_LENGTH', 8):
+            raise serializers.ValidationError("Password should be atleast %s characters long." % getattr(settings, 'PASSWORD_MIN_LENGTH', 8))
+
+        is_password_valid = self.context["request"].user.check_password(value)
+
+        if is_password_valid:
+            raise serializers.ValidationError("new password is already your old password")
+        else:
+            return value
+
+    def validate_confirm_new_password(self, value):
+        data = self.get_initial()
+        new_password = data.get('new_password')
+        if new_password != value:
+            raise serializers.ValidationError("Passwords doesn't match.")
+        return value
+
+    def validate_current_password(self, value):
+        is_password_valid = self.context["request"].user.check_password(value)
+        if is_password_valid:
+            return value
+        else:
+            raise serializers.ValidationError("current Passwords doesn't match.")
+
+    def validate(self, attrs):
+        validated_data = super().validate(attrs)
+        return validated_data
 
 class TokenSerializer(serializers.ModelSerializer):
     auth_token = serializers.CharField(source="key")
