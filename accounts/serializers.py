@@ -1,10 +1,11 @@
 from rest_framework import serializers
 from accounts.models import MyUser
 from django.db.models import Q
-from django.contrib.auth import get_user_model
+from django.contrib.auth import authenticate, get_user_model
 from django.conf import settings
 from accounts.utils import decode_uid
-from .tokens import account_activation_token
+from rest_framework.authtoken.models import Token
+#from .tokens import account_activation_token
 
 User = get_user_model()
 
@@ -95,32 +96,39 @@ class UserLoginSerializer(serializers.ModelSerializer):
 
         return data
 
-class UserActivationSerializer(serializers.Serializer):
-    uid = serializers.CharField()
-    token = serializers.CharField()
+class TokenSerializer(serializers.ModelSerializer):
+    auth_token = serializers.CharField(source="key")
+    class Meta:
+        model = Token
+        fields = ("auth_token",)
 
-    default_error_messages = {
-        "invalid_token": "invlai token provided",
-        "invalid_uid": "invalid uid user",
-    }
 
-    def validate(self, attrs):
-        validated_data = super().validate(attrs)
+# class UserActivationSerializer(serializers.Serializer):
+#     uid = serializers.CharField()
+#     token = serializers.CharField()
 
-        # check the user for this uid is available or not in DB
-        try:
-            uid = decode_uid(self.initial_data.get("uid", ""))
-            self.user = User.objects.get(pk=uid)
-        except (User.DoesNotExist, ValueError, TypeError, OverflowError):
-            key_error = "invalid_uid"
-            raise ValidationError( {"uid": [self.error_messages[key_error]]}, code=key_error )
+#     default_error_messages = {
+#         "invalid_token": "invlai token provided",
+#         "invalid_uid": "invalid uid user",
+#     }
+
+#     def validate(self, attrs):
+#         validated_data = super().validate(attrs)
+
+#         # check the user for this uid is available or not in DB
+#         try:
+#             uid = decode_uid(self.initial_data.get("uid", ""))
+#             self.user = User.objects.get(pk=uid)
+#         except (User.DoesNotExist, ValueError, TypeError, OverflowError):
+#             key_error = "invalid_uid"
+#             raise ValidationError( {"uid": [self.error_messages[key_error]]}, code=key_error )
         
-        # check the token for this token is available or not in DB
-        if user is not None and account_activation_token.check_token(user, token):
-            user.profile.email_confirmed = True
-            user.save()
+#         # check the token for this token is available or not in DB
+#         if user is not None and account_activation_token.check_token(user, token):
+#             user.profile.email_confirmed = True
+#             user.save()
 
-        data["user"] = user_obj
+#         data["user"] = user_obj
         # is_token_valid = self.context["view"].token_generator.check_token(
         #     self.user, self.initial_data.get("token", "")
         # )
@@ -132,17 +140,4 @@ class UserActivationSerializer(serializers.Serializer):
         #     raise ValidationError( {"token": [self.error_messages[key_error]]}, code=key_error)
 
 
-
-# class UserActivationSerializer(UidAndTokenSerializer):
-
-#     default_error_messages = {
-#         "stale_token": "stale token"
-#     }
-
-#     def validate(self, attrs):
-#         attrs = super().validate(attrs)
-#         if not self.user.is_active:
-#             return attrs
-#         #raise exceptions.PermissionDenied(self.error_messages["stale_token"])
-#         raise exceptions.PermissionDenied("permission denied")
    

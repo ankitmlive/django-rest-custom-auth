@@ -2,7 +2,7 @@ from accounts.models import MyUser
 from accounts.email import ActivationEmail
 from rest_framework.authtoken.views import ObtainAuthToken
 
-from accounts.serializers import UserRegistrationSerializer, UserLoginSerializer, UserActivationSerializer
+from accounts.serializers import UserRegistrationSerializer, UserLoginSerializer
 from rest_framework import generics
 
 from django.contrib.auth.models import update_last_login
@@ -16,7 +16,7 @@ from rest_framework import status
 from django.contrib.auth import get_user_model
 
 from rest_framework import viewsets
-from rest_framework import permissions
+from rest_framework.permissions import IsAuthenticated, AllowAny
 
 from rest_framework.authtoken.models import Token
 from rest_framework.authentication import TokenAuthentication
@@ -53,8 +53,7 @@ class UserRegistrationAPIView(generics.CreateAPIView):
 
         return Response(response_data)
 
-
-class UserLoginAPIView(APIView):
+class UserSignInAPIView(ObtainAuthToken):
     """
     View responsible for USER Login
     """
@@ -64,10 +63,11 @@ class UserLoginAPIView(APIView):
     def post(self, request):
         response_data = {}
         serializer = UserLoginSerializer(data=request.data)
-        permission_classes = (permissions.AllowAny,)
+        permission_classes = (AllowAny,)
         if serializer.is_valid(raise_exception=True):
                 user = serializer.validated_data['user']
                 token, created = Token.objects.get_or_create(user=user)
+                user_logged_in.send(sender=user.__class__, request=request, user=user)
                 update_last_login(None, user)
                 response_data['response'] = 'successfully logged in'
                 response_data['email'] = user.email
@@ -78,7 +78,6 @@ class UserLoginAPIView(APIView):
             response_data = serializer.errors
 
         return Response(response_data)
-
 
 class UserActivationAPIView(APIView):
     """
@@ -103,3 +102,26 @@ class UserActivationAPIView(APIView):
         #     settings.EMAIL.confirmation(self.request, context).send(to)
 
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+class UserSignoutAPIView(APIView):
+    """
+     View responsible for USER Signout
+    """
+    authentication_classes = []
+    permission_classes = [IsAuthenticated,]
+
+    def get(self, request):
+        response_data = {}
+        data = Token.objects.filter(user=request.user).delete()
+        # fire a signal from here for user logout
+        #user_logged_out.send(sender=request.user.__class__, request=request, user=request.user)
+        response_data['response'] = 'user successfully logged out'
+        response_data['data']  = data
+
+        return Response(response_data)
+
+class HelloView(APIView):
+    permission_classes = [IsAuthenticated,]
+    def get(self, request):
+        content = {'message': 'Hello, World!'}
+        return Response(content)

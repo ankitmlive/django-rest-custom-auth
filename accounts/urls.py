@@ -12,12 +12,14 @@ from . import views
 urlpatterns = [
     #path('', include(router.urls)),
     path('signup/', views.UserRegistrationAPIView.as_view(), name='sign-up'),
-    path('signin/', views.UserLoginAPIView.as_view(), name='sign-in'),
-    path('activate/', views.UserActivationAPIView.as_view(), name='user-activate')
+    path('signin/', views.UserSignInAPIView.as_view(), name='sign-in'),
+    path('activate/', views.UserActivationAPIView.as_view(), name='user-activate'),
+    path('hello/', views.HelloView.as_view(), name='hello'),
 
 
 
-    #path('signout/', views.UserLogoutAPIView.as_view(), name='sign-out'),
+    path('signout/', views.UserSignoutAPIView.as_view(), name='sign-out'),
+
     #path('change_password/', ChangePasswordView.as_view(), name="change_password"),
     #path('get-token/', tokenViews.obtain_auth_token, name='get-token')
 ]

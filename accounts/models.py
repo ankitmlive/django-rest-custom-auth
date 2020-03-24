@@ -14,7 +14,7 @@ class MyUser(AbstractBaseUser, PermissionsMixin):
     fullname        = models.CharField(verbose_name='full name', max_length=50, blank=True)
 
     is_active       = models.BooleanField(default=False)
-    email_verified  = models.BooleanField(default=False)
+    #email_verified  = models.BooleanField(default=False)
     
     created_at      = models.DateTimeField(auto_now_add=True)
     updated_at      = models.DateTimeField(auto_now=True)
