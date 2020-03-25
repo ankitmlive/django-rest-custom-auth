@@ -120,7 +120,7 @@ class UserActivationAPIView(APIView):
 
 class ChangePasswordAPIView(APIView):
     """
-    View responsible for USER password change not reset
+    View responsible for USER password change
     """
     authentication_classes = [TokenAuthentication,]
     permission_classes = [IsAuthenticated,]
@@ -130,11 +130,13 @@ class ChangePasswordAPIView(APIView):
         serializer = ChangePasswordSerializer(data=request.data, context={'request': request.auth})
         if serializer.is_valid(raise_exception=True):
             data = serializer.validated_data
-            #further processing to be implemented
-            return Response(data)
+            new_password = data["new_password"]
+            self.request.user.set_password(new_password)
+            self.request.user.save()
+            response_data["response"] = "password changed successfully"
+            return Response(response_data)
         else:
             response_data = serializer.errors
-
         return Response(response_data)
 
 #test view
@@ -143,7 +145,7 @@ class HelloView(APIView):
 
     def get(self, request, format=None):
         content = {
-            'user': request.user,  # `django.contrib.auth.User` instance.
-            'auth': request.auth,  # None
+            'user': str(request.user),  # `django.contrib.auth.User` instance.
+            'auth': str(request.auth),  # None
         }
         return Response(content)
