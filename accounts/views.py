@@ -2,7 +2,7 @@ from accounts.models import MyUser
 from accounts.email import ActivationEmail
 from rest_framework.authtoken.views import ObtainAuthToken
 
-from accounts.serializers import UserRegistrationSerializer, UserLoginSerializer, ChangePasswordSerializer, ResetPasswordSerializer
+from accounts.serializers import UserRegistrationSerializer, UserLoginSerializer, ChangePasswordSerializer, ResetPasswordSerializer, ConfirmResetPasswordSerializer
 from rest_framework import generics
 
 from django.contrib.auth.models import update_last_login
@@ -163,6 +163,23 @@ class ResetPasswordAPIView(APIView):
         else:
             response_data = serializer.errors
         return Response(response_data)
+
+class ConfirmResetPasswordAPIView(APIView):
+    """
+    View responsible for USER password reset confirmation
+    """
+    authentication_classes = [TokenAuthentication,]
+    permission_classes = []
+
+    def post(self, request, *args, **kwargs):
+        response_data = {}
+        serializer = ConfirmResetPasswordSerializer(data=request.data)
+        if serializer.is_valid(raise_exception=True):
+            response_data['response'] = "perfect"
+        else:
+            response_data = serializer.errors
+        return Response(response_data)
+
 
 #test view
 class HelloView(APIView):

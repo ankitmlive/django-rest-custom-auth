@@ -161,6 +161,9 @@ class ResetPasswordSerializer(serializers.Serializer):
             raise serializers.ValidationError("User not active.")
         return data
 
+class ConfirmResetPasswordSerializer(serializers.Serializer):
+    pass
+
 class TokenSerializer(serializers.ModelSerializer):
     auth_token = serializers.CharField(source="key")
     class Meta:
