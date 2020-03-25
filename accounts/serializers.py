@@ -131,6 +131,36 @@ class ChangePasswordSerializer(serializers.Serializer):
         validated_data = super().validate(attrs)
         return validated_data
 
+class ResetPasswordSerializer(serializers.Serializer):
+    email = serializers.EmailField(required=False, allow_blank=True, write_only=True, label="Email Address")
+    username = serializers.CharField(required=False, allow_blank=True, write_only=True,)
+
+    def validate(self, data):
+        email = data.get('email', None)
+        username = data.get('username', None)
+
+        if not email and not username:
+            raise serializers.ValidationError("Please enter username or email to reset your password.")
+
+        user = User.objects.filter(
+            Q(email=email) | Q(username=username)
+        ).exclude(
+            email__isnull=True
+        ).exclude(
+            email__iexact=''
+        ).distinct()
+
+        if user.exists() and user.count() == 1:
+            user_obj = user.first()
+        else:
+            raise serializers.ValidationError("we can't find any accout with this email or username")
+
+        if user_obj.is_active:
+            data["user"] = user_obj
+        else:
+            raise serializers.ValidationError("User not active.")
+        return data
+
 class TokenSerializer(serializers.ModelSerializer):
     auth_token = serializers.CharField(source="key")
     class Meta:

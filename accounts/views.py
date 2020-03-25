@@ -2,7 +2,7 @@ from accounts.models import MyUser
 from accounts.email import ActivationEmail
 from rest_framework.authtoken.views import ObtainAuthToken
 
-from accounts.serializers import UserRegistrationSerializer, UserLoginSerializer, ChangePasswordSerializer
+from accounts.serializers import UserRegistrationSerializer, UserLoginSerializer, ChangePasswordSerializer, ResetPasswordSerializer
 from rest_framework import generics
 
 from django.contrib.auth.models import update_last_login
@@ -134,7 +134,32 @@ class ChangePasswordAPIView(APIView):
             self.request.user.set_password(new_password)
             self.request.user.save()
             response_data["response"] = "password changed successfully"
-            return Response(response_data)
+            #send confirmation email to user here
+            #context = {"user": self.request.user}
+            #to = [get_user_email(self.request.user)]
+            #settings.EMAIL.password_changed_confirmation(self.request, context).send(to)
+        else:
+            response_data = serializer.errors
+        return Response(response_data)
+
+class ResetPasswordAPIView(APIView):
+    """
+    View responsible for USER password reset
+    """
+    authentication_classes = [TokenAuthentication,]
+    permission_classes = []
+
+    def post(self, request, *args, **kwargs):
+        response_data = {}
+        serializer = ResetPasswordSerializer(data=request.data)
+        if serializer.is_valid(raise_exception=True):
+            user = serializer.validated_data["user"]
+            if user:
+                context = {"user": user}
+                to = [get_user_email(user)]
+                #we got associated user here , nnow create a link and send email
+                #password_reset(self.request, context).send(to) ... to be implemented
+            response_data["response"] = to #for testing
         else:
             response_data = serializer.errors
         return Response(response_data)
