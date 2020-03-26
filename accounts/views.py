@@ -22,8 +22,7 @@ from rest_framework.authtoken.models import Token
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.decorators import api_view, authentication_classes, permission_classes
 
-from django.core.mail import send_mail
-from accounts.compat import get_user_email
+from accounts.utils import get_user_email
 
 User = get_user_model()
 
@@ -175,6 +174,7 @@ class ConfirmResetPasswordAPIView(APIView):
         response_data = {}
         serializer = ConfirmResetPasswordSerializer(data=request.data)
         if serializer.is_valid(raise_exception=True):
+            user = serializer.validated_data
             response_data['response'] = "perfect"
         else:
             response_data = serializer.errors

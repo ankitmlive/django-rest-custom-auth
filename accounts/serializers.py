@@ -162,7 +162,24 @@ class ResetPasswordSerializer(serializers.Serializer):
         return data
 
 class ConfirmResetPasswordSerializer(serializers.Serializer):
-    pass
+    uid = serializers.CharField(required=True)
+    token = serializers.CharField(allow_blank=True)
+    password = serializers.CharField(required=True, style={'input_type': 'password'})
+    confirm_password = serializers.CharField(required=True, style={'input_type': 'password'})
+
+    def validated_data(self, attrs):
+        validated_data = super().validate(attrs)
+
+        # check the user for this uid is available or not in DB
+        try:
+            uid = decode_uid(self.initial_data.get("uid", ""))
+            self.user = User.objects.get(pk=uid)
+        except (User.DoesNotExist, ValueError, TypeError, OverflowError):
+            key_error = "invalid_uid"
+            raise ValidationError( {"uid": [self.error_messages[key_error]]}, code=key_error )
+
+        return attrs
+
 
 class TokenSerializer(serializers.ModelSerializer):
     auth_token = serializers.CharField(source="key")
