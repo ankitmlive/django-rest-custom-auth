@@ -6,6 +6,7 @@ from django.conf import settings
 from accounts.utils import decode_uid
 from rest_framework.authtoken.models import Token
 from django.contrib.auth.password_validation import validate_password
+from django.contrib.auth.tokens import default_token_generator
 #from .tokens import account_activation_token
 
 User = get_user_model()
@@ -93,7 +94,7 @@ class UserLoginSerializer(serializers.ModelSerializer):
         if user_obj.is_active:
             data["user"] = user_obj
         else:
-            raise serializers.ValidationError("User not active.")
+            raise serializers.ValidationError("user is not active.")
 
         return data
 
@@ -187,8 +188,8 @@ class TokenSerializer(serializers.ModelSerializer):
         fields = ("auth_token",)
 
 class UserActivationSerializer(serializers.Serializer):
-    uid = serializers.CharField()
-    token = serializers.CharField()
+    uid = serializers.CharField(required=True)
+    token = serializers.CharField(required=True)
 
     def validate(self, attrs):
         validated_data = super().validate(attrs)
@@ -196,26 +197,19 @@ class UserActivationSerializer(serializers.Serializer):
         # check the user for this uid is available or not in DB
         try:
             uid = decode_uid(self.initial_data.get("uid", ""))
-            self.user = User.objects.get(pk=uid)
+            user = User.objects.get(pk=uid)
         except (User.DoesNotExist, ValueError, TypeError, OverflowError):
             key_error = "invalid_uid"
-            raise ValidationError( {"uid": [self.error_messages[key_error]]}, code=key_error )
-        
-        # check the token for this token is available or not in DB
-        if user is not None and account_activation_token.check_token(user, token):
-            user.profile.email_confirmed = True
-            user.save()
+            raise serializers.ValidationError( {"uid": [self.error_messages[key_error]]}, code=key_error )
 
-        data["user"] = user_obj
-        is_token_valid = self.context["view"].token_generator.check_token(
-            self.user, self.initial_data.get("token", "")
-        )
+        if user is not None:
+            is_token_valid = default_token_generator.check_token( user, validated_data["token"] )
         
         if is_token_valid:
-            return validated_data
+            return user
         else:
             key_error = "invalid_token"
-            raise ValidationError( {"token": [self.error_messages[key_error]]}, code=key_error)
+            raise serializers.ValidationError( {"token": [self.error_messages[key_error]]}, code=key_error)
 
 
    

@@ -1,8 +1,8 @@
 from accounts.models import MyUser
-from accounts.email import ActivationEmail
+from accounts.email import ActivationEmail, ConfirmationEmail
 from rest_framework.authtoken.views import ObtainAuthToken
 
-from accounts.serializers import UserRegistrationSerializer, UserLoginSerializer, ChangePasswordSerializer, ResetPasswordSerializer, ConfirmResetPasswordSerializer
+from accounts.serializers import UserRegistrationSerializer, UserLoginSerializer, ChangePasswordSerializer, ResetPasswordSerializer, ConfirmResetPasswordSerializer, UserActivationSerializer
 from rest_framework import generics
 
 from django.contrib.auth.models import update_last_login
@@ -30,19 +30,18 @@ class UserSignUpAPIView(generics.CreateAPIView):
     """
     View responsible for new USER Registrartion
     """
+    authentication_classes = []
+    permission_classes = []
+
     def post(self, request, format=None):
         response_data = {}
         serializer = UserRegistrationSerializer(data=request.data)
-        permission_classes = (permissions.AllowAny,)
         if serializer.is_valid():
                 account = serializer.save()
                 response_data['response'] = 'successfully registered new user.'
                 response_data['email'] = account.email
                 response_data['username'] = account.username
                 response_data['pk'] = account.pk
-                token = Token.objects.get(user=account).key
-                response_data['token'] = token
-
                 #after creating user send and activation mail to user
                 context = {"user": account}
                 to = [get_user_email(account)]
@@ -101,21 +100,21 @@ class UserActivationAPIView(APIView):
     permission_classes = []
 
     def post(self, request, *args, **kwargs):
+        response_date = {}
         serializer = UserActivationSerializer(data=request.data)
-        permission_classes = (permissions.AllowAny,)
-        serializer.is_valid(raise_exception=True)
-        user = serializer.user
-        user.is_active = True
-        user.save()
-
-        signals.user_activated.send(sender=self.__class__, user=user, request=self.request)
-
-        # if settings.SEND_CONFIRMATION_EMAIL:
-        #     context = {"user": user}
-        #     to = [get_user_email(user)]
-        #     settings.EMAIL.confirmation(self.request, context).send(to)
-
-        return Response(status=status.HTTP_204_NO_CONTENT)
+        if serializer.is_valid(raise_exception=True):
+            user = serializer.validated_data
+            user.is_active = True
+            user.email_verified = True
+            user.save()
+            #signals.user_activated.send(sender=self.__class__, user=user, request=self.request)
+            context = {"user": user}
+            to = [get_user_email(user)]
+            ConfirmationEmail(self.request, context).send(to)
+            response_date["response"] = "user activated succefully"
+        else:
+            response_date = serializer.errors
+        return Response(response_date)
 
 class ChangePasswordAPIView(APIView):
     """
@@ -179,7 +178,6 @@ class ConfirmResetPasswordAPIView(APIView):
         else:
             response_data = serializer.errors
         return Response(response_data)
-
 
 #test view
 class HelloView(APIView):
