@@ -180,49 +180,42 @@ class ConfirmResetPasswordSerializer(serializers.Serializer):
 
         return attrs
 
-
 class TokenSerializer(serializers.ModelSerializer):
     auth_token = serializers.CharField(source="key")
     class Meta:
         model = Token
         fields = ("auth_token",)
 
+class UserActivationSerializer(serializers.Serializer):
+    uid = serializers.CharField()
+    token = serializers.CharField()
 
-# class UserActivationSerializer(serializers.Serializer):
-#     uid = serializers.CharField()
-#     token = serializers.CharField()
+    def validate(self, attrs):
+        validated_data = super().validate(attrs)
 
-#     default_error_messages = {
-#         "invalid_token": "invlai token provided",
-#         "invalid_uid": "invalid uid user",
-#     }
-
-#     def validate(self, attrs):
-#         validated_data = super().validate(attrs)
-
-#         # check the user for this uid is available or not in DB
-#         try:
-#             uid = decode_uid(self.initial_data.get("uid", ""))
-#             self.user = User.objects.get(pk=uid)
-#         except (User.DoesNotExist, ValueError, TypeError, OverflowError):
-#             key_error = "invalid_uid"
-#             raise ValidationError( {"uid": [self.error_messages[key_error]]}, code=key_error )
+        # check the user for this uid is available or not in DB
+        try:
+            uid = decode_uid(self.initial_data.get("uid", ""))
+            self.user = User.objects.get(pk=uid)
+        except (User.DoesNotExist, ValueError, TypeError, OverflowError):
+            key_error = "invalid_uid"
+            raise ValidationError( {"uid": [self.error_messages[key_error]]}, code=key_error )
         
-#         # check the token for this token is available or not in DB
-#         if user is not None and account_activation_token.check_token(user, token):
-#             user.profile.email_confirmed = True
-#             user.save()
+        # check the token for this token is available or not in DB
+        if user is not None and account_activation_token.check_token(user, token):
+            user.profile.email_confirmed = True
+            user.save()
 
-#         data["user"] = user_obj
-        # is_token_valid = self.context["view"].token_generator.check_token(
-        #     self.user, self.initial_data.get("token", "")
-        # )
+        data["user"] = user_obj
+        is_token_valid = self.context["view"].token_generator.check_token(
+            self.user, self.initial_data.get("token", "")
+        )
         
-        # if is_token_valid:
-        #     return validated_data
-        # else:
-        #     key_error = "invalid_token"
-        #     raise ValidationError( {"token": [self.error_messages[key_error]]}, code=key_error)
+        if is_token_valid:
+            return validated_data
+        else:
+            key_error = "invalid_token"
+            raise ValidationError( {"token": [self.error_messages[key_error]]}, code=key_error)
 
 
    
