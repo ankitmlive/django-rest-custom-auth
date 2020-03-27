@@ -54,6 +54,29 @@ class UserRegistrationSerializer(serializers.Serializer):
         user_obj.save()
         return user_obj
 
+class UserActivationSerializer(serializers.Serializer):
+    uid = serializers.CharField(required=True)
+    token = serializers.CharField(required=True)
+
+    def validate(self, attrs):
+        validated_data = super().validate(attrs)
+
+        # check the user for this uid is available or not in DB
+        try:
+            uid = decode_uid(self.initial_data.get("uid", ""))
+            user = User.objects.get(pk=uid)
+        except (User.DoesNotExist, ValueError, TypeError, OverflowError):
+            raise serializers.ValidationError("we can't find any user with this token-uid" )
+
+        if user is not None:
+            is_token_valid = default_token_generator.check_token( user, validated_data["token"] )
+        
+        if is_token_valid:
+            return user
+        else:
+            key_error = "invalid_token"
+            raise serializers.ValidationError("activation token is not valid or your link is expired! request new one")
+
 class UserLoginSerializer(serializers.ModelSerializer):
 
     username = serializers.CharField(required=False, allow_blank=True, write_only=True,)
@@ -163,52 +186,47 @@ class ResetPasswordSerializer(serializers.Serializer):
 
 class ConfirmResetPasswordSerializer(serializers.Serializer):
     uid = serializers.CharField(required=True)
-    token = serializers.CharField(allow_blank=True)
-    password = serializers.CharField(required=True, style={'input_type': 'password'})
-    confirm_password = serializers.CharField(required=True, style={'input_type': 'password'})
+    token = serializers.CharField(required=True)
+    password = serializers.CharField(required=True, label="Password", style={'input_type': 'password'})
+    confirm_password = serializers.CharField(required=True, label="Confirm Password", style={'input_type': 'password'})
 
-    def validated_data(self, attrs):
-        validated_data = super().validate(attrs)
+    def validate_confirm_password(self, value):
+        data = self.get_initial()
+        password = data.get('password')
+        if password != value:
+            raise serializers.ValidationError("Passwords doesn't match.")
+        return value
+
+    def validate_password(self, value):
+        if len(value) < getattr(settings, 'PASSWORD_MIN_LENGTH', 8):
+            raise serializers.ValidationError("Password should be atleast %s characters long." % getattr(settings, 'PASSWORD_MIN_LENGTH', 8))
+        return value
+
+    def save(self):
+        uid = self.validated_data['uid']
+        token = self.validated_data['token']
+        password = self.validated_data['password']
+        confirm_password = self.validated_data['confirm_password']
 
         # check the user for this uid is available or not in DB
         try:
-            uid = decode_uid(self.initial_data.get("uid", ""))
-            self.user = User.objects.get(pk=uid)
+            uid = decode_uid(uid)
+            user = User.objects.get(pk=uid)
         except (User.DoesNotExist, ValueError, TypeError, OverflowError):
-            key_error = "invalid_uid"
-            raise ValidationError( {"uid": [self.error_messages[key_error]]}, code=key_error )
+            raise serializers.ValidationError("we can't find any user with this token-uid")
 
-        return attrs
+        if user is not None:
+            is_token_valid = default_token_generator.check_token( user, token )
+
+        if is_token_valid:
+            user.set_password(password)
+            user.save()
+            return user
+        else:
+            raise serializers.ValidationError( "token is not valid or your link is expired! request new one")
 
 class TokenSerializer(serializers.ModelSerializer):
     auth_token = serializers.CharField(source="key")
     class Meta:
         model = Token
         fields = ("auth_token",)
-
-class UserActivationSerializer(serializers.Serializer):
-    uid = serializers.CharField(required=True)
-    token = serializers.CharField(required=True)
-
-    def validate(self, attrs):
-        validated_data = super().validate(attrs)
-
-        # check the user for this uid is available or not in DB
-        try:
-            uid = decode_uid(self.initial_data.get("uid", ""))
-            user = User.objects.get(pk=uid)
-        except (User.DoesNotExist, ValueError, TypeError, OverflowError):
-            key_error = "invalid_uid"
-            raise serializers.ValidationError( {"uid": [self.error_messages[key_error]]}, code=key_error )
-
-        if user is not None:
-            is_token_valid = default_token_generator.check_token( user, validated_data["token"] )
-        
-        if is_token_valid:
-            return user
-        else:
-            key_error = "invalid_token"
-            raise serializers.ValidationError( {"token": [self.error_messages[key_error]]}, code=key_error)
-
-
-   

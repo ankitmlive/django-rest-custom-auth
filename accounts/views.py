@@ -1,5 +1,5 @@
 from accounts.models import MyUser
-from accounts.email import ActivationEmail, ConfirmationEmail, PasswordChangedConfirmationEmail
+from accounts.email import ActivationEmail, ConfirmationEmail, PasswordChangedConfirmationEmail, PasswordResetEmail
 from rest_framework.authtoken.views import ObtainAuthToken
 
 from accounts.serializers import UserRegistrationSerializer, UserLoginSerializer, ChangePasswordSerializer, ResetPasswordSerializer, ConfirmResetPasswordSerializer, UserActivationSerializer
@@ -154,9 +154,8 @@ class ResetPasswordAPIView(APIView):
             if user:
                 context = {"user": user}
                 to = [get_user_email(user)]
-                #we got associated user here , nnow create a link and send email
-                #password_reset(self.request, context).send(to) ... to be implemented
-            response_data["response"] = to #for testing
+                PasswordResetEmail(self.request, context).send(to) 
+                response_data["response"] = "password reset link has been sent"
         else:
             response_data = serializer.errors
         return Response(response_data)
@@ -172,8 +171,11 @@ class ConfirmResetPasswordAPIView(APIView):
         response_data = {}
         serializer = ConfirmResetPasswordSerializer(data=request.data)
         if serializer.is_valid(raise_exception=True):
-            user = serializer.validated_data
-            response_data['response'] = "perfect"
+            user = serializer.save()
+            context = {"user": user}
+            to = [get_user_email(user)]
+            PasswordChangedConfirmationEmail(self.request, context).send(to)
+            response_data['response'] = 'password reset done successfully.'
         else:
             response_data = serializer.errors
         return Response(response_data)
