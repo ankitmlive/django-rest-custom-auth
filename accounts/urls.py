@@ -18,6 +18,6 @@ urlpatterns = [
     path('reset-password/', views.ResetPasswordAPIView.as_view(), name="reset-password"),
     path('reset-password-confirm/', views.ConfirmResetPasswordAPIView.as_view(), name="reset-password-confirm"),
 
-    path('account-activate/', views.UserActivationAPIView.as_view(), name='account-activate'),
+    path('activate-account/', views.UserActivationAPIView.as_view(), name='activate-account'),
     path('hello/', views.HelloView.as_view(), name='hello'),
 ]

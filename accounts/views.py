@@ -1,5 +1,5 @@
 from accounts.models import MyUser
-from accounts.email import ActivationEmail, ConfirmationEmail
+from accounts.email import ActivationEmail, ConfirmationEmail, PasswordChangedConfirmationEmail
 from rest_framework.authtoken.views import ObtainAuthToken
 
 from accounts.serializers import UserRegistrationSerializer, UserLoginSerializer, ChangePasswordSerializer, ResetPasswordSerializer, ConfirmResetPasswordSerializer, UserActivationSerializer
@@ -131,11 +131,10 @@ class ChangePasswordAPIView(APIView):
             new_password = data["new_password"]
             self.request.user.set_password(new_password)
             self.request.user.save()
+            context = {"user": self.request.user}
+            to = [get_user_email(self.request.user)]
+            PasswordChangedConfirmationEmail(self.request, context).send(to)
             response_data["response"] = "password changed successfully"
-            #send confirmation email to user here
-            #context = {"user": self.request.user}
-            #to = [get_user_email(self.request.user)]
-            #settings.EMAIL.password_changed_confirmation(self.request, context).send(to)
         else:
             response_data = serializer.errors
         return Response(response_data)
@@ -185,7 +184,7 @@ class HelloView(APIView):
 
     def get(self, request, format=None):
         content = {
-            'user': str(request.user),  # `django.contrib.auth.User` instance.
-            'auth': str(request.auth),  # None
+            'user': str(request.user), 
+            'auth': str(request.auth), 
         }
         return Response(content)

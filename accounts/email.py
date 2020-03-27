@@ -1,17 +1,13 @@
 from django.contrib.auth.tokens import default_token_generator
 from accounts.mail import BaseEmailMessage
-
 from accounts.utils import encode_uid
-#from djoser.conf import settings
 
 class ActivationEmail(BaseEmailMessage):
-    template_name = "email/activation.html"
+    template_name = "email/account_activation_email.html"
     
     def get_context_data(self):
         activation_url = "/activate/{uid}/{token}"
-        # ActivationEmail can be deleted
         context = super().get_context_data()
-
         user = context.get("user")
         context["uid"] = encode_uid(user.pk)
         context["token"] = default_token_generator.make_token(user)
@@ -19,4 +15,7 @@ class ActivationEmail(BaseEmailMessage):
         return context
 
 class ConfirmationEmail(BaseEmailMessage):
-    template_name = "email/confirmation.html"
+    template_name = "email/account_confirmation_email.html"
+
+class PasswordChangedConfirmationEmail(BaseEmailMessage):
+    template_name = "email/password_changed_confirmation_email.html"
