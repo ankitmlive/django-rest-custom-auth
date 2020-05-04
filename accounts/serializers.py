@@ -6,8 +6,7 @@ from accounts.utils import decode_uid
 from rest_framework.authtoken.models import Token
 from django.contrib.auth.password_validation import validate_password
 from django.contrib.auth.tokens import default_token_generator
-from .exceptions import AlreadyExistsError
-from .models import Follow
+
 
 User = get_user_model()
 
