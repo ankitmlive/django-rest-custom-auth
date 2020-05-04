@@ -1,5 +1,4 @@
 from rest_framework import serializers
-from accounts.models import MyUser
 from django.db.models import Q
 from django.contrib.auth import authenticate, get_user_model
 from django.conf import settings
@@ -7,17 +6,31 @@ from accounts.utils import decode_uid
 from rest_framework.authtoken.models import Token
 from django.contrib.auth.password_validation import validate_password
 from django.contrib.auth.tokens import default_token_generator
+from .exceptions import AlreadyExistsError
+from .models import Follow
 
 User = get_user_model()
 
+#--> User Serializers
+class UserAvatarSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['avatar']
+
+class UserSerializer(serializers.HyperlinkedModelSerializer):
+    class Meta:
+        model = User
+        fields = ['pk', 'url', 'username', 'email', 'fullname', 'title', 'avatar']
+        read_only_fields = ('pk', 'username', 'email',)
+
+#--> auth serializers
 class UserRegistrationSerializer(serializers.Serializer):
-    fullname    = serializers.CharField(required=True)
     email       = serializers.EmailField(required=True, label="Email Address")
     username    = serializers.CharField(max_length=200)
     password    = serializers.CharField(required=True, label="Password", style={'input_type': 'password'})
-    password_2  = serializers.CharField(required=True, label="Confirm Password", style={'input_type': 'password'})
+    confirm_password  = serializers.CharField(required=True, label="Confirm Password", style={'input_type': 'password'})
 
-    def validate_password_2(self, value):
+    def validate_confirm_password(self, value):
         data = self.get_initial()
         password = data.get('password')
         if password != value:
@@ -40,14 +53,12 @@ class UserRegistrationSerializer(serializers.Serializer):
         return value
 
     def save(self):
-        fullname = self.validated_data['fullname']
         username = self.validated_data['username']
         email    = self.validated_data['email']
         password = self.validated_data['password']
         user_obj = User(
                 username = username,
                 email = email,
-                fullname = fullname,
             )
         user_obj.set_password(password)
         user_obj.is_active = False
@@ -78,7 +89,6 @@ class UserActivationSerializer(serializers.Serializer):
             raise serializers.ValidationError("activation token is not valid or your link is expired! request new one")
 
 class UserLoginSerializer(serializers.ModelSerializer):
-
     username = serializers.CharField(required=False, allow_blank=True, write_only=True,)
     email = serializers.EmailField(required=False, allow_blank=True, write_only=True, label="Email Address")
     token = serializers.CharField(allow_blank=True, read_only=True)

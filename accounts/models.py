@@ -1,21 +1,24 @@
 from django.db import models
+from django.utils import timezone
 from django.contrib.auth.models import (AbstractBaseUser, PermissionsMixin)
-
-from django.conf import settings
-from django.db.models.signals import post_save
-from django.dispatch import receiver
-from rest_framework.authtoken.models import Token
-
+from django.utils.translation import ugettext_lazy as _
 from .managers import CustomUserManager
 
-class MyUser(AbstractBaseUser, PermissionsMixin):
-    email           = models.EmailField(verbose_name='email address', max_length=255, unique=True,)
-    username 		= models.CharField(max_length=30, unique=True)
-    fullname        = models.CharField(verbose_name='full name', max_length=50, blank=True)
+class User(AbstractBaseUser, PermissionsMixin):
+    email    = models.EmailField(verbose_name='email address', max_length=255, unique=True,)
+    username = models.CharField(max_length=30, unique=True)
+
+    fullname = models.CharField(verbose_name='full name', max_length=50, blank=True)
+    title = models.TextField(default='', max_length=30, blank=True)
+    avatar = models.ImageField(upload_to='users/avatar/', blank=True)
 
     is_active       = models.BooleanField(default=False)
     email_verified  = models.BooleanField(default=False)
-    
+    is_verified     = models.BooleanField(default=False)
+
+    is_admin = models.BooleanField(default=False)
+    is_staff = models.BooleanField(default=False)
+
     created_at      = models.DateTimeField(auto_now_add=True)
     updated_at      = models.DateTimeField(auto_now=True)
 
@@ -24,14 +27,13 @@ class MyUser(AbstractBaseUser, PermissionsMixin):
     # is_superuser field provided by PermissionsMixin
     # groups field provided by PermissionsMixin
     # user_permissions field provided by PermissionsMixin
-
-    #is_staff = models.BooleanField(default=False) can be removed if not using Django Admin
-    #is_admin can be removed if not using Django Admin
+    # is_staff can be removed if not using Django Admin
+    # is_admin can be removed if not using Django Admin
 
     objects = CustomUserManager()
 
     USERNAME_FIELD = 'email'
-    REQUIRED_FIELDS = ['fullname', 'username',]
+    REQUIRED_FIELDS = ['username',]
 
     #email & password is auto required , no need to implement in REQUIRED_FIELD 
 
@@ -53,9 +55,3 @@ class MyUser(AbstractBaseUser, PermissionsMixin):
         "Is the user a member of staff?"
         # Simplest possible answer: All admins are staff
         return self.is_admin
-
-#hiding this code coz we dont generate token for every user untill user will login
-# @receiver(post_save, sender=settings.AUTH_USER_MODEL)
-# def create_auth_token(sender, instance=None, created=False, **kwargs):
-#     if created:
-#         Token.objects.create(user=instance)
