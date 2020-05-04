@@ -1,7 +1,7 @@
 from accounts.email import ActivationEmail, ConfirmationEmail, PasswordChangedConfirmationEmail, PasswordResetEmail
 from rest_framework.authtoken.views import ObtainAuthToken
 
-from accounts.serializers import UserRegistrationSerializer, UserLoginSerializer, ChangePasswordSerializer, ResetPasswordSerializer, ConfirmResetPasswordSerializer, UserActivationSerializer, FollowSerializer, UnFollowSerializer, UserSerializer, UserAvatarSerializer
+from accounts.serializers import UserRegistrationSerializer, UserLoginSerializer, ChangePasswordSerializer, ResetPasswordSerializer, ConfirmResetPasswordSerializer, UserActivationSerializer, UserSerializer, UserAvatarSerializer
 
 from rest_framework import generics
 from django.contrib.auth.models import update_last_login
