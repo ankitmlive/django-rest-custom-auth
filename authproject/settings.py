@@ -81,7 +81,7 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'authproject.wsgi.application'
-AUTH_USER_MODEL = 'accounts.MyUser'
+AUTH_USER_MODEL = 'accounts.User'
 
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
 EMAIL_HOST = "smtp.gmail.com"

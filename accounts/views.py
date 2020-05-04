@@ -23,8 +23,6 @@ from rest_framework.authtoken.models import Token
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.decorators import api_view, authentication_classes, permission_classes
 
-from .models import Follow
-from .renderers import UserJSONRenderer
 
 from accounts.utils import get_user_email
 
@@ -103,7 +101,6 @@ class UserSignInAPIView(ObtainAuthToken):
     View responsible for USER Login
     """
     authentication_classes = []
-    renderer_classes = [UserJSONRenderer]
     permission_classes = [AllowAny]
 
     def post(self, request):
