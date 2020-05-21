@@ -22,6 +22,16 @@ class UserSerializer(serializers.HyperlinkedModelSerializer):
         fields = ['pk', 'url', 'username', 'email', 'fullname', 'title', 'avatar']
         read_only_fields = ('pk', 'username', 'email',)
 
+#--> checkUsername serializer
+class CheckUsernameSerializer(serializers.Serializer):
+    username    = serializers.CharField(max_length=50)
+    def validate_username(self, value):
+        if User.objects.filter(username=value).exists():
+            available = True
+        else:
+            available = False
+        return available
+
 #--> auth serializers
 class UserRegistrationSerializer(serializers.Serializer):
     email       = serializers.EmailField(required=True, label="Email Address")

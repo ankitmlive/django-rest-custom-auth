@@ -1,7 +1,7 @@
 from accounts.email import ActivationEmail, ConfirmationEmail, PasswordChangedConfirmationEmail, PasswordResetEmail
 from rest_framework.authtoken.views import ObtainAuthToken
 
-from accounts.serializers import UserRegistrationSerializer, UserLoginSerializer, ChangePasswordSerializer, ResetPasswordSerializer, ConfirmResetPasswordSerializer, UserActivationSerializer, UserSerializer, UserAvatarSerializer
+from accounts.serializers import UserRegistrationSerializer, UserLoginSerializer, ChangePasswordSerializer, CheckUsernameSerializer, ResetPasswordSerializer, ConfirmResetPasswordSerializer, UserActivationSerializer, UserSerializer, UserAvatarSerializer
 
 from rest_framework import generics
 from django.contrib.auth.models import update_last_login
@@ -69,8 +69,31 @@ class UserViewSet(viewsets.ModelViewSet):
         elif request.method == "PATCH":
             return self.partial_update(request, *args, **kwargs)
 
+#--> check username view
+class CheckUsernameView(APIView):
+    """
+    View responsible for UserName checking
+    """
+    authentication_classes = [TokenAuthentication,]
+    permission_classes = [AllowAny,]
+
+    def post(self, request):
+        response_data = {}
+        serializer = CheckUsernameSerializer(data=request.data)
+        if serializer.is_valid(raise_exception=True):
+            username = serializer.validated_data["username"]
+            if username:
+                response_data["details"] = "username is already taken"
+                response_data["status"] = False
+            else:
+                response_data["details"] = "username is available"
+                response_data["status"] = True
+        else:
+            response_data = serializer.errors
+        return Response(response_data)
+
 #--> auth view
-class UserSignUpAPIView(generics.CreateAPIView):
+class UserSignUpView(generics.CreateAPIView):
     """
     View responsible for new USER Registrartion
     """
@@ -96,7 +119,7 @@ class UserSignUpAPIView(generics.CreateAPIView):
 
         return Response(response_data)
 
-class UserSignInAPIView(ObtainAuthToken):
+class UserSignInView(ObtainAuthToken):
     """
     View responsible for USER Login
     """
@@ -123,7 +146,7 @@ class UserSignInAPIView(ObtainAuthToken):
 
         return Response(response_data)
 
-class UserSignOutAPIView(APIView):
+class UserSignOutView(APIView):
     """
     View responsible for USER Signout
     later there is a need of serializer implementaion
@@ -138,7 +161,7 @@ class UserSignOutAPIView(APIView):
         response_data['response'] = 'user successfully logged out'
         return Response(response_data)
 
-class UserActivationAPIView(APIView):
+class UserActivationView(APIView):
     """
      View responsible for USER Activation
     """
@@ -162,7 +185,7 @@ class UserActivationAPIView(APIView):
             response_date = serializer.errors
         return Response(response_date)
 
-class ChangePasswordAPIView(APIView):
+class ChangePasswordView(APIView):
     """
     View responsible for USER password change
     """
@@ -185,7 +208,7 @@ class ChangePasswordAPIView(APIView):
             response_data = serializer.errors
         return Response(response_data)
 
-class ResetPasswordAPIView(APIView):
+class ResetPasswordView(APIView):
     """
     View responsible for USER password reset
     """
@@ -206,7 +229,7 @@ class ResetPasswordAPIView(APIView):
             response_data = serializer.errors
         return Response(response_data)
 
-class ConfirmResetPasswordAPIView(APIView):
+class ConfirmResetPasswordView(APIView):
     """
     View responsible for USER password reset confirmation
     """
